@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetMarket - Compra, Venta & Red Social</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            bg: '#f3f7fa',      // Blanco azulado estilo Opera
+                            card: '#ffffff',    // Blanco puro para las tarjetas
+                            primary: '#0d9488', // Verde azulado principal (Teal 600)
+                            secondary: '#2dd4bf', // Verde azulado brillante (Teal 400)
+                            tertiary: '#0f172a',  // Negro/Pizarra oscuro (Slate 900)
+                            muted: '#64748b',     // Gris azulado
+                            light: '#e2e8f0',     // Gris claro
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'netflix': '0 8px 30px rgba(0,0,0,0.06)',
+                        'hover-card': '0 20px 40px rgba(13, 148, 136, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f3f7fa;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+        /* Barra de scroll personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f3f7fa;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0d9488;
+        }
+        /* Ocultar barra de scroll en contenedores estilo Netflix */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Animaciones de tarjetas de productos */
+        .product-card {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+        /* Header con efecto esmerilado de vidrio */
+        .glass-header {
+            background: rgba(243, 247, 250, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* --- SISTEMA DE TRANSICIONES DE CÁMARA (DESLIZAMIENTO) --- */
+        .tab-content-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            min-height: calc(100vh - 10rem);
+        }
+        .tab-content {
+            width: 100%;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease-out;
+            will-change: transform, opacity;
+        }
+        /* Estado Activo en pantalla */
+        .tab-active {
+            transform: translateX(0);
+            opacity: 1;
+            position: relative;
+            pointer-events: auto;
+            visibility: visible;
+            height: auto;
+        }
+        /* Estado oculto a la izquierda */
+        .tab-left {
+            transform: translateX(-100%);
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            visibility: hidden;
+            height: 0;
+            overflow: hidden;
+        }
+        /* Estado oculto a la derecha */
+        .tab-right {
+            transform: translateX(100%);
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            visibility: hidden;
+            height: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="text-brand-tertiary">
+
+    <!-- HEADER / NAVEGACIÓN -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass-header border-b border-brand-light/60 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            
+            <!-- Logo y Enlaces -->
+            <div class="flex items-center space-x-8">
+                <a href="#" onclick="switchTab('home')" class="flex items-center space-x-2 group">
+                    <span class="text-2xl font-black tracking-tighter text-brand-primary group-hover:text-brand-secondary transition-colors">
+                        NET<span class="text-brand-tertiary">MARKET</span>
+                    </span>
+                    <div class="w-2.5 h-2.5 rounded-full bg-brand-secondary animate-pulse"></div>
+                </a>
+
+                <!-- Enlaces del Nav -->
+                <nav class="hidden md:flex space-x-6 text-sm font-semibold text-brand-muted">
+                    <button onclick="switchTab('home')" id="nav-home" class="hover:text-brand-primary transition-colors text-brand-primary font-bold">Inicio</button>
+                    <button onclick="switchTab('marketplace')" id="nav-marketplace" class="hover:text-brand-primary transition-colors">Catálogo</button>
+                    <button onclick="switchTab('social')" id="nav-social" class="hover:text-brand-primary transition-colors">Comunidad</button>
+                    <button onclick="switchTab('sell')" id="nav-sell" class="hover:text-brand-primary transition-colors flex items-center space-x-1">
+                        <i class="fa-solid fa-circle-plus"></i>
+                        <span>Vender</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Buscador y Panel de Usuario -->
+            <div class="flex items-center space-x-4">
+                <!-- Buscador Global -->
+                <div class="relative hidden sm:block">
+                    <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="Buscar productos, creadores..." class="w-60 bg-brand-card border border-brand-light text-xs rounded-full pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-brand-muted text-xs"></i>
+                </div>
+
+                <!-- Ícono de Bolsa de Compra -->
+                <button onclick="toggleCartModal()" class="relative p-2 text-brand-tertiary hover:text-brand-primary transition-colors">
+                    <i class="fa-solid fa-bag-shopping text-xl"></i>
+                    <span id="cart-badge" class="absolute -top-1 -right-1 bg-brand-primary text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+                </button>
+
+                <!-- Avatar de Perfil de Usuario -->
+                <div class="relative group">
+                    <button onclick="switchTab('profile')" class="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 rounded-full p-0.5">
+                        <img id="header-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="Avatar" class="w-8 h-8 rounded-full object-cover border-2 border-brand-primary">
+                        <span id="header-username" class="hidden lg:inline text-xs font-bold text-brand-tertiary">@camila_sales</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="pt-20 pb-24 min-h-screen">
+        <div class="tab-content-container">
+
+            <!-- 1. PESTAÑA INICIO (Desliza suavemente) -->
+            <section id="tab-home" class="tab-content tab-active">
+                <!-- Banner Destacado -->
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+                    <div class="relative rounded-3xl overflow-hidden bg-brand-tertiary text-white h-[450px] flex items-center shadow-netflix">
+                        <div class="absolute inset-0 z-0">
+                            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80" alt="Producto Destacado" class="w-full h-full object-cover opacity-35 filter grayscale brightness-75">
+                            <div class="absolute inset-0 bg-gradient-to-r from-brand-tertiary via-brand-tertiary/80 to-transparent"></div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-brand-tertiary via-transparent to-transparent"></div>
+                        </div>
+
+                        <div class="relative z-10 max-w-2xl px-8 sm:px-12 md:px-16 flex flex-col items-start space-y-4">
+                            <div class="flex items-center space-x-2 bg-brand-primary/20 border border-brand-primary/40 px-3 py-1 rounded-full text-xs font-bold text-brand-secondary">
+                                <i class="fa-solid fa-star"></i>
+                                <span>RECOMENDADO DE LA SEMANA</span>
+                            </div>
+                            <h1 class="text-4xl sm:text-5xl font-black tracking-tight leading-tight">
+                                Consola Retro Wave <span class="text-brand-secondary">X-90</span>
+                            </h1>
+                            <p class="text-sm sm:text-base text-gray-300 font-light leading-relaxed">
+                                Vuelve a los 80s con más de 10,000 juegos preinstalados, pantalla OLED de 5.5 pulgadas y gatillos mecánicos de alta precisión. ¡Edición física súper limitada!
+                            </p>
+                            <div class="flex items-center space-x-2 py-1">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80" alt="Creador Avatar" class="w-6 h-6 rounded-full object-cover">
+                                <span class="text-xs text-slate-300">Vendido por <strong class="text-white hover:underline cursor-pointer" onclick="viewUserProfile('retro_collector', 'Collector Retro', 'Amante del hardware clásico y los videojuegos de cartucho.', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80')">@retro_collector</strong></span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-4 pt-2 w-full sm:w-auto">
+                                <button onclick="directPurchase(1)" class="bg-brand-primary hover:bg-brand-secondary text-white font-bold px-6 py-3 rounded-full text-sm shadow-lg shadow-brand-primary/30 transition-all flex items-center justify-center space-x-2 w-full sm:w-auto">
+                                    <i class="fa-solid fa-cart-shopping"></i>
+                                    <span>Comprar por $129.99</span>
+                                </button>
+                                <button onclick="showQuickView(1)" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-6 py-3 rounded-full text-sm transition-all flex items-center justify-center space-x-2 w-full sm:w-auto">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    <span>Ver detalles</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FILA 1: Tu Siguiente Adquisición -->
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-black text-brand-tertiary">Tu Siguiente Adquisición</h2>
+                            <p class="text-xs text-brand-muted">Productos seleccionados basados en tus intereses recientes</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="scrollRow('row-recommended', -1)" class="w-8 h-8 rounded-full bg-brand-card hover:bg-brand-light flex items-center justify-center text-brand-tertiary shadow-sm transition-all"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                            <button onclick="scrollRow('row-recommended', 1)" class="w-8 h-8 rounded-full bg-brand-card hover:bg-brand-light flex items-center justify-center text-brand-tertiary shadow-sm transition-all"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div id="row-recommended" class="flex space-x-6 overflow-x-auto py-4 px-2 no-scrollbar scroll-smooth">
+                        <!-- Rellenado por JS -->
+                    </div>
+                </div>
+
+                <!-- FILA 2: Productos Virtuales -->
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-black text-brand-tertiary">Productos Virtuales & Códigos</h2>
+                            <p class="text-xs text-brand-muted">Suscripciones, claves de juegos, arte digital y recursos listos para descargar</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="scrollRow('row-virtuals', -1)" class="w-8 h-8 rounded-full bg-brand-card hover:bg-brand-light flex items-center justify-center text-brand-tertiary shadow-sm transition-all"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                            <button onclick="scrollRow('row-virtuals', 1)" class="w-8 h-8 rounded-full bg-brand-card hover:bg-brand-light flex items-center justify-center text-brand-tertiary shadow-sm transition-all"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div id="row-virtuals" class="flex space-x-6 overflow-x-auto py-4 px-2 no-scrollbar scroll-smooth">
+                        <!-- Rellenado por JS -->
+                    </div>
+                </div>
+
+                <!-- FILA 3: Últimas Novedades Físicas -->
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-black text-brand-tertiary">Últimas Joyas Físicas</h2>
+                            <p class="text-xs text-brand-muted">Artículos tangibles enviados directo a tu hogar por la comunidad</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="scrollRow('row-physicals', -1)" class="w-8 h-8 rounded-full bg-brand-card hover:bg-brand-light flex items-center justify-center text-brand-tertiary shadow-sm transition-all"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                            <button onclick="scrollRow('row-physicals', 1)" class="w-8 h-8 rounded-full bg-brand-card hover:bg-brand-light flex items-center justify-center text-brand-tertiary shadow-sm transition-all"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div id="row-physicals" class="flex space-x-6 overflow-x-auto py-4 px-2 no-scrollbar scroll-smooth">
+                        <!-- Rellenado por JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. PESTAÑA MARKETPLACE -->
+            <section id="tab-marketplace" class="tab-content tab-right">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                        <div>
+                            <h1 class="text-3xl font-black text-brand-tertiary">Catálogo Completo</h1>
+                            <p class="text-sm text-brand-muted">Explora todo lo que nuestra comunidad tiene para ofrecer</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button onclick="filterMarket('all')" id="filter-all" class="px-4 py-2 rounded-full text-xs font-bold bg-brand-primary text-white transition-all">Todos</button>
+                            <button onclick="filterMarket('physical')" id="filter-physical" class="px-4 py-2 rounded-full text-xs font-bold bg-brand-card text-brand-muted hover:text-brand-primary transition-all">Físicos</button>
+                            <button onclick="filterMarket('virtual')" id="filter-virtual" class="px-4 py-2 rounded-full text-xs font-bold bg-brand-card text-brand-muted hover:text-brand-primary transition-all">Virtuales</button>
+                            
+                            <select onchange="sortMarket(this.value)" class="bg-brand-card border border-brand-light text-xs font-bold rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-primary text-brand-muted">
+                                <option value="recent">Más recientes</option>
+                                <option value="price-asc">Precio: Menor a Mayor</option>
+                                <option value="price-desc">Precio: Mayor a Menor</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="market-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <!-- Rellenado dinámicamente -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. PESTAÑA SOCIAL (Comunidad) -->
+            <section id="tab-social" class="tab-content tab-right">
+                <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 space-y-6">
+                            <!-- Caja para Crear Publicación -->
+                            <div class="bg-brand-card rounded-2xl p-4 border border-brand-light/60 shadow-sm">
+                                <div class="flex items-start space-x-3">
+                                    <img id="social-post-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="Avatar" class="w-10 h-10 rounded-full object-cover border border-brand-primary">
+                                    <div class="flex-1">
+                                        <textarea id="post-textarea" rows="3" placeholder="¿Qué estás vendiendo, buscando o recomendando hoy?" class="w-full bg-transparent border-none text-sm placeholder-brand-muted focus:outline-none resize-none py-1"></textarea>
+                                        
+                                        <div class="flex items-center justify-between pt-3 border-t border-brand-light/40">
+                                            <div class="flex space-x-2 text-brand-primary">
+                                                <button onclick="triggerProductLink()" class="p-2 hover:bg-brand-bg rounded-full transition-all text-xs font-semibold flex items-center space-x-1">
+                                                    <i class="fa-solid fa-link"></i>
+                                                    <span class="hidden sm:inline">Vincular Producto</span>
+                                                </button>
+                                            </div>
+                                            <button onclick="createSocialPost()" class="bg-brand-primary hover:bg-brand-secondary text-white font-bold text-xs px-4 py-2 rounded-full transition-all shadow-md shadow-brand-primary/20">
+                                                Publicar
+                                            </button>
+                                        </div>
+                                        <div id="linked-product-preview" class="mt-2 hidden">
+                                            <!-- Previsualización del producto vinculado -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Muro de Publicaciones -->
+                            <div id="social-stream" class="space-y-4">
+                                <!-- Rellenado por JS -->
+                            </div>
+                        </div>
+
+                        <!-- Columna Derecha -->
+                        <div class="space-y-6">
+                            <div class="bg-brand-card rounded-2xl p-5 border border-brand-light/60 shadow-sm">
+                                <h3 class="text-sm font-extrabold text-brand-tertiary mb-4">Vendedores Destacados</h3>
+                                <div class="space-y-4" id="recommended-sellers">
+                                    <!-- Rellenado por JS -->
+                                </div>
+                            </div>
+
+                            <div class="bg-brand-card rounded-2xl p-5 border border-brand-light/60 shadow-sm text-xs text-brand-muted space-y-2">
+                                <p class="font-semibold text-brand-tertiary">Acerca de NetMarket Social</p>
+                                <p>Interactúa con creadores, comenta en publicaciones, comparte tus productos recomendados y mantén tu reputación en alto.</p>
+                                <div class="flex flex-wrap gap-2 pt-2">
+                                    <a href="#" class="hover:underline">Términos</a>
+                                    <a href="#" class="hover:underline">Privacidad</a>
+                                    <a href="#" class="hover:underline">Ayuda</a>
+                                    <a href="#" class="hover:underline">© 2026 NetMarket Inc.</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. PESTAÑA PERFIL -->
+            <section id="tab-profile" class="tab-content tab-right">
+                <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="bg-brand-card rounded-3xl overflow-hidden border border-brand-light/60 shadow-netflix mb-8">
+                        <div class="h-48 w-full bg-brand-tertiary relative">
+                            <img id="profile-cover" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" alt="Portada" class="w-full h-full object-cover opacity-60">
+                            <button onclick="openEditProfileModal()" class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 border border-white/40 text-white font-semibold text-xs px-4 py-2 rounded-full backdrop-blur-sm transition-all">
+                                <i class="fa-solid fa-pen-to-square mr-1"></i> Editar Perfil
+                            </button>
+                        </div>
+
+                        <div class="px-6 pb-6 relative">
+                            <div class="absolute -top-16 left-6">
+                                <img id="profile-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Avatar" class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md">
+                            </div>
+
+                            <div class="pt-16 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div>
+                                    <h2 id="profile-display-name" class="text-2xl font-black text-brand-tertiary">Camila Sales</h2>
+                                    <p id="profile-handle" class="text-sm text-brand-primary font-bold">@camila_sales</p>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <div class="text-center">
+                                        <span id="profile-followers-count" class="block text-lg font-black text-brand-tertiary">1.4K</span>
+                                        <span class="text-[10px] uppercase tracking-wider text-brand-muted font-bold">Seguidores</span>
+                                    </div>
+                                    <div class="w-px h-8 bg-brand-light"></div>
+                                    <div class="text-center">
+                                        <span id="profile-sales-count" class="block text-lg font-black text-brand-tertiary">47</span>
+                                        <span class="text-[10px] uppercase tracking-wider text-brand-muted font-bold">Ventas</span>
+                                    </div>
+                                    <div class="w-px h-8 bg-brand-light"></div>
+                                    <div class="text-center">
+                                        <span class="block text-lg font-black text-brand-primary">4.9 ★</span>
+                                        <span class="text-[10px] uppercase tracking-wider text-brand-muted font-bold">Reputación</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p id="profile-bio" class="mt-4 text-sm text-brand-muted leading-relaxed">
+                                Diseñadora digital y entusiasta de la tecnología retro. Vendo plantillas UX, arte NFT y productos vintage restaurados. ¡Envíos rápidos garantizados! 🚀
+                            </p>
+
+                            <div class="mt-4 flex flex-wrap gap-y-2 gap-x-4 text-xs text-brand-muted font-medium">
+                                <span><i class="fa-solid fa-location-dot mr-1"></i> <span id="profile-location">Medellín, Colombia</span></span>
+                                <span><i class="fa-solid fa-link mr-1"></i> <a id="profile-website" href="#" class="text-brand-primary hover:underline">camila.design</a></span>
+                                <span><i class="fa-solid fa-calendar-days mr-1"></i> Miembro desde 2024</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-6 border-b border-brand-light mb-6">
+                        <button onclick="toggleProfileView('listings')" id="profile-tab-listings" class="pb-3 text-sm font-bold border-b-2 border-brand-primary text-brand-primary">
+                            Mis Productos en Venta
+                        </button>
+                        <button onclick="toggleProfileView('activity')" id="profile-tab-activity" class="pb-3 text-sm font-bold border-b-2 border-transparent text-brand-muted hover:text-brand-tertiary">
+                            Mis Publicaciones
+                        </button>
+                        <button onclick="toggleProfileView('purchased')" id="profile-tab-purchased" class="pb-3 text-sm font-bold border-b-2 border-transparent text-brand-muted hover:text-brand-tertiary">
+                            Mis Compras
+                        </button>
+                    </div>
+
+                    <div id="profile-listings-section" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        <!-- Rellenado por JS -->
+                    </div>
+
+                    <div id="profile-activity-section" class="space-y-4 hidden">
+                        <!-- Rellenado por JS -->
+                    </div>
+
+                    <div id="profile-purchased-section" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 hidden">
+                        <!-- Rellenado por JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. PESTAÑA VENDER -->
+            <section id="tab-sell" class="tab-content tab-right">
+                <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="bg-brand-card rounded-3xl p-6 sm:p-8 border border-brand-light/60 shadow-netflix">
+                        <div class="mb-6">
+                            <h2 class="text-2xl font-black text-brand-tertiary">Publicar un Producto Nuevo</h2>
+                            <p class="text-xs text-brand-muted">Llega a miles de compradores y compártelo instantáneamente en la red social</p>
+                        </div>
+
+                        <form id="sell-form" onsubmit="handlePublishProduct(event)" class="space-y-6">
+                            <div>
+                                <label class="block text-xs uppercase font-extrabold text-brand-muted tracking-wider mb-2">Título del Producto</label>
+                                <input type="text" id="sell-title" required placeholder="Ej: Pack de Iconos Cyberpunk o Zapatos Minimalistas" class="w-full bg-brand-bg border border-brand-light/80 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all">
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs uppercase font-extrabold text-brand-muted tracking-wider mb-2">Precio ($ USD)</label>
+                                    <input type="number" step="0.01" id="sell-price" required placeholder="Ej: 29.99" class="w-full bg-brand-bg border border-brand-light/80 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs uppercase font-extrabold text-brand-muted tracking-wider mb-2">Tipo de Producto</label>
+                                    <select id="sell-type" required class="w-full bg-brand-bg border border-brand-light/80 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all">
+                                        <option value="physical">📦 Físico (Requiere envío)</option>
+                                        <option value="virtual">⚡ Virtual (Descarga digital)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs uppercase font-extrabold text-brand-muted tracking-wider mb-2">Descripción</label>
+                                <textarea id="sell-description" rows="4" required placeholder="Describe las características principales del producto, qué incluye, estado del artículo, etc..." class="w-full bg-brand-bg border border-brand-light/80 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all resize-none"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs uppercase font-extrabold text-brand-muted tracking-wider mb-2">Imagen de Portada (URL o Preajuste)</label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <input type="text" id="sell-image" placeholder="URL de la imagen (deja en blanco para usar por defecto)" class="w-full bg-brand-bg border border-brand-light/80 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all">
+                                    
+                                    <select id="sell-image-preset" onchange="usePresetImage(this.value)" class="w-full bg-brand-bg border border-brand-light/80 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all">
+                                        <option value="">-- O seleccionar un diseño --</option>
+                                        <option value="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=500&q=80">Suscripción de Gaming</option>
+                                        <option value="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80">Reloj Inteligente</option>
+                                        <option value="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80">Audífonos Premium</option>
+                                        <option value="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80">Zapatillas Deportivas</option>
+                                        <option value="https://images.unsplash.com/photo-1581291518655-9523c932dedf?auto=format&fit=crop&w=500&q=80">Curso / E-Book Virtual</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="sell-auto-share" checked class="rounded text-brand-primary focus:ring-brand-primary h-4 w-4">
+                                <label for="sell-auto-share" class="text-xs text-brand-muted font-semibold">Compartir automáticamente un post sobre este producto en mi feed social</label>
+                            </div>
+
+                            <button type="submit" class="w-full bg-brand-primary hover:bg-brand-secondary text-white font-extrabold py-3.5 rounded-xl transition-all shadow-lg shadow-brand-primary/20 flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>Publicar Producto 🚀</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- VISTA RÁPIDA DE PRODUCTOS (Modal Estilo Netflix) -->
+    <div id="quickview-modal" class="fixed inset-0 z-50 bg-brand-tertiary/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-brand-card rounded-3xl overflow-hidden max-w-2xl w-full border border-brand-light/60 shadow-netflix relative">
+            <button onclick="closeQuickView()" class="absolute top-4 right-4 bg-brand-bg hover:bg-brand-light text-brand-tertiary w-8 h-8 rounded-full flex items-center justify-center transition-all z-10"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                <div class="h-64 md:h-full relative min-h-[250px] bg-brand-bg">
+                    <img id="qv-image" src="" alt="Producto" class="w-full h-full object-cover">
+                    <span id="qv-type-badge" class="absolute top-4 left-4 bg-brand-primary text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">TIPO</span>
+                </div>
+                <div class="p-6 sm:p-8 flex flex-col justify-between space-y-4">
+                    <div>
+                        <div class="flex items-center space-x-2 py-1 mb-2">
+                            <img id="qv-seller-avatar" src="" alt="" class="w-6 h-6 rounded-full object-cover">
+                            <span id="qv-seller" class="text-xs text-brand-muted">Por <strong>@usuario</strong></span>
+                        </div>
+                        <h3 id="qv-title" class="text-2xl font-black text-brand-tertiary leading-tight">Título del Producto</h3>
+                        <p id="qv-price" class="text-xl font-extrabold text-brand-primary mt-1">$0.00</p>
+                        <p id="qv-description" class="text-xs text-brand-muted leading-relaxed mt-3">Descripción detallada del producto.</p>
+                    </div>
+
+                    <div class="flex flex-col space-y-2 pt-4">
+                        <button id="qv-buy-btn" onclick="" class="w-full bg-brand-primary hover:bg-brand-secondary text-white font-extrabold py-3 rounded-xl transition-all shadow-md shadow-brand-primary/20 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-wallet"></i>
+                            <span>Comprar Ahora</span>
+                        </button>
+                        <button id="qv-cart-btn" onclick="" class="w-full bg-brand-bg hover:bg-brand-light text-brand-tertiary font-bold py-3 rounded-xl transition-all flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-cart-plus"></i>
+                            <span>Añadir al Carrito</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR PERFIL -->
+    <div id="editprofile-modal" class="fixed inset-0 z-50 bg-brand-tertiary/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-brand-card rounded-3xl p-6 sm:p-8 max-w-md w-full border border-brand-light/60 shadow-netflix relative">
+            <button onclick="closeEditProfileModal()" class="absolute top-4 right-4 bg-brand-bg hover:bg-brand-light text-brand-tertiary w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="fa-solid fa-xmark"></i></button>
+            
+            <h3 class="text-xl font-black text-brand-tertiary mb-6">Editar Tu Perfil Social</h3>
+            
+            <form onsubmit="handleSaveProfile(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-brand-muted uppercase mb-1">Nombre para Mostrar</label>
+                    <input type="text" id="edit-display-name" required class="w-full bg-brand-bg border border-brand-light text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-primary">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-brand-muted uppercase mb-1">Usuario (@)</label>
+                    <input type="text" id="edit-handle" required class="w-full bg-brand-bg border border-brand-light text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-primary">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-brand-muted uppercase mb-1">Biografía</label>
+                    <textarea id="edit-bio" rows="3" class="w-full bg-brand-bg border border-brand-light text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-brand-muted uppercase mb-1">Ubicación</label>
+                        <input type="text" id="edit-location" class="w-full bg-brand-bg border border-brand-light text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-primary">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-brand-muted uppercase mb-1">Sitio Web</label>
+                        <input type="text" id="edit-website" class="w-full bg-brand-bg border border-brand-light text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-primary">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-brand-muted uppercase mb-1">Avatar (Preajuste)</label>
+                        <select id="edit-avatar-select" class="w-full bg-brand-bg border border-brand-light text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-primary">
+                            <option value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80">Chica Diseñadora</option>
+                            <option value="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80">Chico Gamer</option>
+                            <option value="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80">Desarrolladora Tech</option>
+                            <option value="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80">Emprendedor Minimalista</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-brand-muted uppercase mb-1">Fondo de Portada</label>
+                        <select id="edit-cover-select" class="w-full bg-brand-bg border border-brand-light text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-primary">
+                            <option value="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80">Arte Abstracto 3D</option>
+                            <option value="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=800&q=80">Degradado Retro</option>
+                            <option value="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80">Circuitos Geek</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-brand-primary hover:bg-brand-secondary text-white font-extrabold py-3 rounded-xl transition-all mt-4">
+                    Guardar Cambios
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- VINCULAR PRODUCTO A POST -->
+    <div id="linkproduct-modal" class="fixed inset-0 z-50 bg-brand-tertiary/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-brand-card rounded-3xl p-6 max-w-md w-full border border-brand-light/60 shadow-netflix relative">
+            <button onclick="closeProductLinkModal()" class="absolute top-4 right-4 bg-brand-bg hover:bg-brand-light text-brand-tertiary w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="fa-solid fa-xmark"></i></button>
+            
+            <h3 class="text-lg font-black text-brand-tertiary mb-4">Vincular Producto a tu Publicación</h3>
+            <p class="text-xs text-brand-muted mb-4">Selecciona uno de tus productos activos para promocionarlo en tu post.</p>
+            
+            <div id="linkable-products-list" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                <!-- Rellenado dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- BOLSA DE COMPRAS (Carrito) -->
+    <div id="cart-modal" class="fixed inset-0 z-50 bg-brand-tertiary/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-brand-card rounded-3xl p-6 sm:p-8 max-w-md w-full border border-brand-light/60 shadow-netflix relative">
+            <button onclick="toggleCartModal()" class="absolute top-4 right-4 bg-brand-bg hover:bg-brand-light text-brand-tertiary w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="fa-solid fa-xmark"></i></button>
+            
+            <h3 class="text-xl font-black text-brand-tertiary mb-6 flex items-center space-x-2">
+                <i class="fa-solid fa-bag-shopping text-brand-primary"></i>
+                <span>Bolsa de Compras</span>
+            </h3>
+
+            <div id="cart-items" class="space-y-4 max-h-64 overflow-y-auto pr-1">
+                <!-- Productos del carrito rellenados por JS -->
+            </div>
+
+            <div class="border-t border-brand-light/80 pt-4 mt-6">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="text-sm font-bold text-brand-muted">Total Estimado</span>
+                    <span id="cart-total" class="text-2xl font-black text-brand-primary">$0.00</span>
+                </div>
+
+                <div class="flex space-x-2">
+                    <button onclick="clearCart()" class="w-1/3 bg-brand-bg hover:bg-brand-light text-brand-muted font-bold py-3 rounded-xl transition-all text-xs">Vaciar</button>
+                    <button onclick="checkoutCart()" class="w-2/3 bg-brand-primary hover:bg-brand-secondary text-white font-extrabold py-3 rounded-xl transition-all text-xs shadow-md shadow-brand-primary/20 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-check-double"></i>
+                        <span>Confirmar Compra</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANTALLA DE LOGRO EXITOSO (Estilo Duolingo) -->
+    <div id="celebration-modal" class="fixed inset-0 z-50 bg-brand-tertiary/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="bg-brand-card rounded-3xl p-8 max-w-md w-full text-center border-2 border-brand-secondary shadow-hover-card relative">
+            <div class="w-20 h-20 rounded-full bg-brand-secondary/10 text-brand-primary border-4 border-brand-secondary flex items-center justify-center mx-auto mb-6 animate-pulse">
+                <i class="fa-solid fa-check text-4xl"></i>
+            </div>
+            
+            <h3 class="text-2xl font-black text-brand-tertiary mb-2">¡Transacción Exitosa!</h3>
+            <p id="celebration-msg" class="text-sm text-brand-muted leading-relaxed mb-6">¡Has completado tu transacción! El característico sonido de Duolingo (ding-ding) acaba de sonar para celebrar tu logro.</p>
+            
+            <div class="flex justify-center space-x-2 text-brand-primary mb-6 text-lg">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <i class="fa-solid fa-trophy"></i>
+                <i class="fa-solid fa-fire"></i>
+            </div>
+
+            <button onclick="closeCelebration()" class="w-full bg-brand-primary hover:bg-brand-secondary text-white font-black py-3 rounded-xl transition-all">
+                ¡Excelente! Continuar
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL DE PERFIL DE OTROS USUARIOS -->
+    <div id="user-profile-modal" class="fixed inset-0 z-50 bg-brand-tertiary/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-brand-card rounded-3xl overflow-hidden max-w-2xl w-full border border-brand-light/60 shadow-netflix relative">
+            <button onclick="closeUserProfileModal()" class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 border border-white/40 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all z-10"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="h-36 w-full bg-brand-primary relative">
+                <div class="absolute inset-0 bg-gradient-to-t from-brand-tertiary/60 to-transparent"></div>
+            </div>
+
+            <div class="px-6 pb-6 relative">
+                <div class="absolute -top-12 left-6">
+                    <img id="upm-avatar" src="" alt="Avatar" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md">
+                </div>
+
+                <div class="pt-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 id="upm-display-name" class="text-xl font-black text-brand-tertiary">Nombre</h2>
+                        <p id="upm-handle" class="text-xs text-brand-primary font-bold">@usuario</p>
+                    </div>
+                    <div>
+                        <button id="upm-follow-btn" class="bg-brand-primary hover:bg-brand-secondary text-white font-extrabold text-xs px-5 py-2.5 rounded-full transition-all">
+                            Seguir
+                        </button>
+                    </div>
+                </div>
+
+                <p id="upm-bio" class="mt-3 text-xs text-brand-muted leading-relaxed">Biografía del usuario...</p>
+
+                <div class="mt-4 flex items-center space-x-6 text-xs text-brand-muted font-bold pt-4 border-t border-brand-light/40">
+                    <div>
+                        <span class="text-brand-tertiary" id="upm-followers">2.1K</span> Seguidores
+                    </div>
+                    <div>
+                        <span class="text-brand-tertiary" id="upm-sales">84</span> Ventas
+                    </div>
+                    <div class="text-brand-primary">
+                        <span>★ 5.0 Reputación</span>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <h4 class="text-xs font-black text-brand-tertiary uppercase tracking-wider mb-3">Productos de este creador</h4>
+                    <div id="upm-products-grid" class="grid grid-cols-2 gap-4 max-h-48 overflow-y-auto pr-1">
+                        <!-- Rellenado por JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- LÓGICA Y ESTADOS DE LA APLICACIÓN -->
+    <script>
+        // Variables de Estado Globales
+        let currentUser = {
+            displayName: "Camila Sales",
+            handle: "camila_sales",
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+            cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+            bio: "Diseñadora digital y entusiasta de la tecnología retro. Vendo plantillas UX, arte NFT y productos vintage restaurados. ¡Envíos rápidos garantizados! 🚀",
+            location: "Medellín, Colombia",
+            website: "camila.design",
+            followers: 1420,
+            sales: 47
+        };
+
+        let products = [
+            {
+                id: 1,
+                title: "Consola Retro Wave X-90",
+                price: 129.99,
+                description: "Consola portable de diseño nostálgico. Más de 10k títulos precargados, pantalla OLED vibrante de 5.5 pulgadas y batería recargable de larga duración. Producto físico.",
+                type: "physical",
+                image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=500&q=80",
+                seller: "retro_collector",
+                sellerAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80",
+                sellerBio: "Coleccionista de hardware vintage y desarrollador indie.",
+                likes: 124,
+                comments: 18
+            },
+            {
+                id: 2,
+                title: "Pack UI/UX Neon Cyberpunk",
+                price: 19.99,
+                description: "Colección completa de componentes UI, pantallas terminadas e iconos vectorizados con un estilo neon ciberpunk espectacular. Archivo virtual editable en Figma.",
+                type: "virtual",
+                image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=500&q=80",
+                seller: "camila_sales",
+                sellerAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+                sellerBio: "Diseñadora UX/UI y amante del Pixel Art.",
+                likes: 89,
+                comments: 4
+            },
+            {
+                id: 3,
+                title: "Teclado Mecánico Custom Mint",
+                price: 145.00,
+                description: "Teclado mecánico con formato 65%. Switches lineales Gateron Yellow lubricados de fábrica, keycaps color menta de doble inyección. Producto físico exclusivo.",
+                type: "physical",
+                image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=500&q=80",
+                seller: "keeb_maker",
+                sellerAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80",
+                sellerBio: "Construyo teclados customizados a pedido.",
+                likes: 210,
+                comments: 32
+            },
+            {
+                id: 4,
+                title: "Curso: Dominio de la Síntesis de Audio",
+                price: 49.00,
+                description: "Aprende la API de Web Audio y técnicas avanzadas de síntesis analógica en JS. Clases en video y proyectos listos para descargar. Producto virtual.",
+                type: "virtual",
+                image: "https://images.unsplash.com/photo-1581291518655-9523c932dedf?auto=format&fit=crop&w=500&q=80",
+                seller: "sound_wizard",
+                sellerAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80",
+                sellerBio: "Ingeniero de sonido apasionado por el desarrollo web interactivo.",
+                likes: 56,
+                comments: 9
+            },
+            {
+                id: 5,
+                title: "Reloj Minimalist Chronos 2",
+                price: 89.99,
+                description: "Reloj de pulsera analógico con correa de cuero italiano genuino y caja de acero inoxidable ultra-delgada. Diseño minimalista ideal para el día a día. Físico.",
+                type: "physical",
+                image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80",
+                seller: "camila_sales",
+                sellerAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80",
+                sellerBio: "Diseñadora UX/UI y amante del Pixel Art.",
+                likes: 42,
+                comments: 3
+            },
+            {
+                id: 6,
+                title: "E-Book: Secretos del Prompt Engineering",
+                price: 9.99,
+                description: "La guía definitiva para exprimir los LLMs, generar código impecable e imágenes fotorrealistas. 250 páginas con ejemplos prácticos y listos para usar. Virtual.",
+                type: "virtual",
+                image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=500&q=80",
+                seller: "ai_enthusiast",
+                sellerAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=80&q=80",
+                sellerBio: "Investigador independiente de Inteligencia Artificial.",
+                likes: 312,
+                comments: 48
+            }
+        ];
+
+        let socialPosts = [
+            {
+                id: 1,
+                author: "retro_collector",
+                displayName: "Collector Retro",
+                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80",
+                bio: "Coleccionista de hardware vintage y desarrollador indie.",
+                content: "¡Acabo de publicar la mítica Consola Retro Wave X-90 en NetMarket! Solo tengo 3 unidades restauradas. La pantalla OLED se ve increíble en persona. 🔥🕹️",
+                time: "Hace 10 min",
+                likes: 15,
+                liked: false,
+                linkedProduct: 1
+            },
+            {
+                id: 2,
+                author: "sound_wizard",
+                displayName: "Sound Wizard",
+                avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80",
+                bio: "Ingeniero de sonido apasionado por el desarrollo web interactivo.",
+                content: "Si quieres aprender a crear efectos de sonido con código puro (como el clásico ding ding de Duolingo), revisa mi nuevo curso digital que acabo de subir aquí mismo. 🎶💡",
+                time: "Hace 2 horas",
+                likes: 24,
+                liked: false,
+                linkedProduct: 4
+            },
+            {
+                id: 3,
+                author: "keeb_maker",
+                displayName: "Keyboard Artisans",
+                avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80",
+                bio: "Construyo teclados customizados a pedido.",
+                content: "¡Amantes de la menta y la escritura suave! Miren este ensamble customizado con interruptores lubricados. Una delicia acústica para los programadores.",
+                time: "Hace 1 día",
+                likes: 54,
+                liked: true,
+                linkedProduct: 3
+            }
+        ];
+
+        let cart = [];
+        let purchasedItems = [];
+        let activeProfileTab = 'listings';
+        let selectedProductForPost = null;
+        let currentTab = 'home'; // Control de la pestaña activa
+
+        // Inicializar contexto de audio de forma segura
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Sintetizador Web Audio nativo para un "Ding-Ding" brillante estilo Duolingo
+        function playDuolingoDing() {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                
+                // Nota 1: Sol 5 (783.99 Hz)
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(783.99, now);
+                
+                gain1.gain.setValueAtTime(0.12, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                
+                osc1.start(now);
+                osc1.stop(now + 0.12);
+
+                // Nota 2: Si 5 (987.77 Hz) con un ligero delay para el doble tono alegre
+                const delay = 0.08;
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(987.77, now + delay);
+                
+                gain2.gain.setValueAtTime(0.15, now + delay);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.22);
+                
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                
+                osc2.start(now + delay);
+                osc2.stop(now + delay + 0.22);
+            } catch (e) {
+                console.warn("Fallo o retraso en la inicialización de audio.");
+            }
+        }
+
+        // --- SISTEMA INTERACTIVO DE CAMBIO DE PESTAÑA CON DESLIZAMIENTO ---
+        function switchTab(newTabId) {
+            if (newTabId === currentTab) return;
+
+            const tabs = ['home', 'marketplace', 'social', 'profile', 'sell'];
+            const oldIndex = tabs.indexOf(currentTab);
+            const newIndex = tabs.indexOf(newTabId);
+
+            const oldTabEl = document.getElementById(`tab-${currentTab}`);
+            const newTabEl = document.getElementById(`tab-${newTabId}`);
+
+            if (!oldTabEl || !newTabEl) return;
+
+            // Determinar dirección del deslizamiento de cámara
+            if (newIndex > oldIndex) {
+                // Va a la derecha: el nuevo entra desde la derecha y el viejo se va a la izquierda
+                newTabEl.className = "tab-content tab-right";
+                newTabEl.offsetHeight; // Forzar reflujo de renderizado del navegador
+                
+                oldTabEl.className = "tab-content tab-left";
+                newTabEl.className = "tab-content tab-active";
+            } else {
+                // Va a la izquierda: el nuevo entra desde la izquierda y el viejo se va a la derecha
+                newTabEl.className = "tab-content tab-left";
+                newTabEl.offsetHeight; // Forzar reflujo de renderizado del navegador
+                
+                oldTabEl.className = "tab-content tab-right";
+                newTabEl.className = "tab-content tab-active";
+            }
+
+            // Ubicar correctamente los estados pasivos de las demás pestañas para evitar colisiones
+            tabs.forEach((tabId, idx) => {
+                if (tabId !== currentTab && tabId !== newTabId) {
+                    const el = document.getElementById(`tab-${tabId}`);
+                    if (el) {
+                        if (idx < newIndex) {
+                            el.className = "tab-content tab-left";
+                        } else {
+                            el.className = "tab-content tab-right";
+                        }
+                    }
+                }
+            });
+
+            currentTab = newTabId;
+
+            // Actualizar diseño de botones activos en el menú superior
+            const navIds = ['home', 'marketplace', 'social', 'sell'];
+            navIds.forEach(id => {
+                const el = document.getElementById(`nav-${id}`);
+                if (el) {
+                    if (id === newTabId) {
+                        el.classList.add('text-brand-primary', 'font-bold');
+                        el.classList.remove('text-brand-muted');
+                    } else {
+                        el.classList.remove('text-brand-primary', 'font-bold');
+                        el.classList.add('text-brand-muted');
+                    }
+                }
+            });
+
+            // Inicializaciones de datos según pestaña
+            if (newTabId === 'home') {
+                renderHomeRows();
+            } else if (newTabId === 'marketplace') {
+                renderMarketGrid(products);
+            } else if (newTabId === 'social') {
+                renderSocialStream();
+                renderRecommendedSellers();
+            } else if (newTabId === 'profile') {
+                renderUserProfileData();
+            }
+        }
+
+        // Control de Scroll de Filas Horizontales (Estilo Netflix)
+        function scrollRow(rowId, direction) {
+            const container = document.getElementById(rowId);
+            const scrollAmount = 320 * direction;
+            container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+
+        // Renderizado del Inicio
+        function renderHomeRows() {
+            const recommendedRow = document.getElementById('row-recommended');
+            const virtualsRow = document.getElementById('row-virtuals');
+            const physicalsRow = document.getElementById('row-physicals');
+
+            recommendedRow.innerHTML = '';
+            virtualsRow.innerHTML = '';
+            physicalsRow.innerHTML = '';
+
+            products.forEach(p => {
+                const cardHTML = createProductCardHTML(p);
+
+                // Recomendados (excepto los propios)
+                if (p.seller !== currentUser.handle) {
+                    recommendedRow.insertAdjacentHTML('beforeend', cardHTML);
+                }
+
+                // Fila virtuales
+                if (p.type === 'virtual') {
+                    virtualsRow.insertAdjacentHTML('beforeend', cardHTML);
+                }
+
+                // Fila físicos
+                if (p.type === 'physical') {
+                    physicalsRow.insertAdjacentHTML('beforeend', cardHTML);
+                }
+            });
+        }
+
+        // Creación del HTML de Tarjeta de Producto (Estilo Rediseñado)
+        function createProductCardHTML(product) {
+            const isOwner = product.seller === currentUser.handle;
+            return `
+                <div class="product-card min-w-[260px] max-w-[260px] bg-brand-card rounded-2xl border border-brand-light/60 overflow-hidden shadow-sm flex flex-col justify-between h-[360px] relative">
+                    <div class="h-44 relative bg-brand-bg group overflow-hidden">
+                        <img src="${product.image}" alt="${product.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                        <span class="absolute top-3 left-3 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest ${product.type === 'physical' ? 'bg-indigo-100 text-indigo-700' : 'bg-brand-secondary/20 text-brand-primary'} border border-transparent">
+                            ${product.type === 'physical' ? 'Físico 📦' : 'Virtual ⚡'}
+                        </span>
+                        
+                        <!-- Panel de acciones rápidas al pasar el mouse -->
+                        <div class="absolute inset-0 bg-brand-tertiary/75 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+                            <button onclick="showQuickView(${product.id})" class="p-2.5 bg-white/20 hover:bg-white text-white hover:text-brand-primary rounded-full transition-all text-xs" title="Vista Rápida">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
+                            ${isOwner ? `
+                                <button onclick="deleteProduct(${product.id})" class="p-2.5 bg-white/20 hover:bg-red-500 text-white rounded-full transition-all text-xs" title="Eliminar">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            ` : `
+                                <button onclick="addToCart(${product.id})" class="p-2.5 bg-brand-primary hover:bg-brand-secondary text-white rounded-full transition-all text-xs" title="Añadir a Bolsa">
+                                    <i class="fa-solid fa-bag-shopping"></i>
+                                </button>
+                            `}
+                        </div>
+                    </div>
+
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs text-brand-muted hover:underline cursor-pointer font-semibold" onclick="viewUserProfile('${product.seller}', '${product.seller === currentUser.handle ? currentUser.displayName : product.seller}', '${product.sellerBio || ''}', '${product.sellerAvatar || ''}')">@${product.seller}</span>
+                                <div class="flex items-center text-brand-muted text-[11px] space-x-1">
+                                    <i class="fa-regular fa-heart"></i>
+                                    <span>${product.likes}</span>
+                                </div>
+                            </div>
+                            <h4 class="text-sm font-bold text-brand-tertiary line-clamp-1 hover:text-brand-primary cursor-pointer" onclick="showQuickView(${product.id})">${product.title}</h4>
+                            <p class="text-xs text-brand-muted mt-1 line-clamp-2 leading-relaxed font-light">${product.description}</p>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-3 border-t border-brand-light/40 mt-3">
+                            <span class="text-base font-black text-brand-primary">$${product.price.toFixed(2)}</span>
+                            ${isOwner ? `
+                                <span class="text-[10px] uppercase font-extrabold text-brand-muted bg-brand-bg px-2.5 py-1 rounded-full border border-brand-light">Tu Anuncio</span>
+                            ` : `
+                                <button onclick="directPurchase(${product.id})" class="bg-brand-primary hover:bg-brand-secondary text-white text-[11px] font-extrabold px-3.5 py-1.5 rounded-full transition-all flex items-center space-x-1 shadow-md shadow-brand-primary/10">
+                                    <span>Comprar</span>
+                                    <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Renderizado del Catálogo de Marketplace
+        let currentFilter = 'all';
+        function renderMarketGrid(items) {
+            const grid = document.getElementById('market-grid');
+            grid.innerHTML = '';
+
+            let filtered = items;
+            if (currentFilter !== 'all') {
+                filtered = items.filter(p => p.type === currentFilter);
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fa-regular fa-folder-open text-brand-muted text-4xl mb-3"></i>
+                        <p class="text-sm text-brand-muted">No se encontraron productos en esta categoría.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(p => {
+                grid.insertAdjacentHTML('beforeend', createProductCardHTML(p));
+            });
+        }
+
+        function filterMarket(type) {
+            currentFilter = type;
+            const buttons = ['all', 'physical', 'virtual'];
+            buttons.forEach(btn => {
+                const el = document.getElementById(`filter-${btn}`);
+                if (btn === type) {
+                    el.className = "px-4 py-2 rounded-full text-xs font-bold bg-brand-primary text-white transition-all";
+                } else {
+                    el.className = "px-4 py-2 rounded-full text-xs font-bold bg-brand-card text-brand-muted hover:text-brand-primary transition-all";
+                }
+            });
+            renderMarketGrid(products);
+        }
+
+        function sortMarket(criteria) {
+            let sorted = [...products];
+            if (criteria === 'price-asc') {
+                sorted.sort((a, b) => a.price - b.price);
+            } else if (criteria === 'price-desc') {
+                sorted.sort((a, b) => b.price - a.price);
+            } else {
+                sorted = [...products].reverse();
+            }
+            renderMarketGrid(sorted);
+        }
+
+        function handleSearch(query) {
+            const lowerQuery = query.toLowerCase().trim();
+            if (lowerQuery === '') {
+                renderMarketGrid(products);
+                return;
+            }
+            const filtered = products.filter(p => 
+                p.title.toLowerCase().includes(lowerQuery) || 
+                p.description.toLowerCase().includes(lowerQuery) ||
+                p.seller.toLowerCase().includes(lowerQuery)
+            );
+            renderMarketGrid(filtered);
+            switchTab('marketplace');
+        }
+
+        // Acciones del Carrito
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            if (product.seller === currentUser.handle) {
+                showSimpleToast("No puedes comprar tu propio producto.");
+                return;
+            }
+
+            if (cart.some(item => item.id === productId)) {
+                showSimpleToast("Este producto ya está en tu bolsa.");
+                return;
+            }
+
+            cart.push(product);
+            updateCartUI();
+            showSimpleToast(`Añadido: ${product.title}`);
+        }
+
+        function updateCartUI() {
+            const badge = document.getElementById('cart-badge');
+            const itemsContainer = document.getElementById('cart-items');
+            const totalEl = document.getElementById('cart-total');
+
+            if (cart.length > 0) {
+                badge.innerText = cart.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            itemsContainer.innerHTML = '';
+            let total = 0;
+            cart.forEach(item => {
+                total += item.price;
+                itemsContainer.innerHTML += `
+                    <div class="flex items-center justify-between bg-brand-bg rounded-xl p-3 border border-brand-light/60">
+                        <div class="flex items-center space-x-3">
+                            <img src="${item.image}" alt="${item.title}" class="w-12 h-12 rounded-lg object-cover">
+                            <div>
+                                <h4 class="text-xs font-bold text-brand-tertiary line-clamp-1">${item.title}</h4>
+                                <p class="text-xs text-brand-primary font-black">$${item.price.toFixed(2)}</p>
+                            </div>
+                        </div>
+                        <button onclick="removeFromCart(${item.id})" class="text-brand-muted hover:text-red-500 transition-colors p-1"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                    </div>
+                `;
+            });
+
+            totalEl.innerText = `$${total.toFixed(2)}`;
+
+            if (cart.length === 0) {
+                itemsContainer.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fa-solid fa-basket-shopping text-3xl text-brand-muted/40 mb-2"></i>
+                        <p class="text-xs text-brand-muted">Tu bolsa está vacía.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCartUI();
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartUI();
+        }
+
+        function toggleCartModal() {
+            const modal = document.getElementById('cart-modal');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+            updateCartUI();
+        }
+
+        // Compra directa y Checkout con sonido automático
+        function directPurchase(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            if (product.seller === currentUser.handle) {
+                showSimpleToast("No puedes comprar tu propio producto.");
+                return;
+            }
+
+            purchasedItems.push(product);
+            
+            const autoPost = {
+                id: socialPosts.length + 1,
+                author: currentUser.handle,
+                displayName: currentUser.displayName,
+                avatar: currentUser.avatar,
+                bio: currentUser.bio,
+                content: `🚀 ¡Acabo de comprar "${product.title}" de @${product.seller}! No puedo esperar para probarlo. Totalmente recomendado. 🙌💎`,
+                time: "Ahora mismo",
+                likes: 0,
+                liked: false,
+                linkedProduct: product.id
+            };
+            socialPosts.unshift(autoPost);
+
+            triggerCelebration(`¡Has comprado "${product.title}" exitosamente!`);
+        }
+
+        function checkoutCart() {
+            if (cart.length === 0) {
+                showSimpleToast("Tu bolsa está vacía.");
+                return;
+            }
+
+            cart.forEach(product => {
+                purchasedItems.push(product);
+                const autoPost = {
+                    id: socialPosts.length + 1,
+                    author: currentUser.handle,
+                    displayName: currentUser.displayName,
+                    avatar: currentUser.avatar,
+                    bio: currentUser.bio,
+                    content: `💼 ¡He adquirido "${product.title}"! Añadido a mi colección personal a través de NetMarket.`,
+                    time: "Ahora mismo",
+                    likes: 0,
+                    liked: false,
+                    linkedProduct: product.id
+                };
+                socialPosts.unshift(autoPost);
+            });
+
+            const count = cart.length;
+            cart = [];
+            updateCartUI();
+            toggleCartModal();
+
+            triggerCelebration(`¡Se procesó la compra de ${count} productos!`);
+        }
+
+        function triggerCelebration(msg) {
+            playDuolingoDing(); // Reproducción de sonido automática
+            document.getElementById('celebration-msg').innerText = `${msg}`;
+            const modal = document.getElementById('celebration-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCelebration() {
+            const modal = document.getElementById('celebration-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            switchTab('profile');
+        }
+
+        // Vista rápida de producto
+        function showQuickView(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            document.getElementById('qv-image').src = product.image;
+            document.getElementById('qv-title').innerText = product.title;
+            document.getElementById('qv-price').innerText = `$${product.price.toFixed(2)}`;
+            document.getElementById('qv-description').innerText = product.description;
+            document.getElementById('qv-seller').innerHTML = `Por <strong class="hover:underline cursor-pointer" onclick="viewUserProfile('${product.seller}', '${product.seller}', '${product.sellerBio || ''}', '${product.sellerAvatar || ''}')">@${product.seller}</strong>`;
+            document.getElementById('qv-seller-avatar').src = product.sellerAvatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80';
+            
+            const badge = document.getElementById('qv-type-badge');
+            badge.innerText = product.type === 'physical' ? 'Físico 📦' : 'Virtual ⚡';
+            
+            const buyBtn = document.getElementById('qv-buy-btn');
+            const cartBtn = document.getElementById('qv-cart-btn');
+
+            if (product.seller === currentUser.handle) {
+                buyBtn.classList.add('hidden');
+                cartBtn.classList.add('hidden');
+            } else {
+                buyBtn.classList.remove('hidden');
+                cartBtn.classList.remove('hidden');
+                buyBtn.onclick = () => { closeQuickView(); directPurchase(product.id); };
+                cartBtn.onclick = () => { closeQuickView(); addToCart(product.id); };
+            }
+
+            const modal = document.getElementById('quickview-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeQuickView() {
+            const modal = document.getElementById('quickview-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Publicar nuevo anuncio / Vender
+        function usePresetImage(url) {
+            if (url) {
+                document.getElementById('sell-image').value = url;
+            }
+        }
+
+        function handlePublishProduct(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('sell-title').value;
+            const price = parseFloat(document.getElementById('sell-price').value);
+            const type = document.getElementById('sell-type').value;
+            const description = document.getElementById('sell-description').value;
+            let image = document.getElementById('sell-image').value.trim();
+
+            if (image === '') {
+                image = type === 'physical' 
+                    ? 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80' 
+                    : 'https://images.unsplash.com/photo-1581291518655-9523c932dedf?auto=format&fit=crop&w=500&q=80';
+            }
+
+            const newProduct = {
+                id: products.length + 1,
+                title,
+                price,
+                type,
+                description,
+                image,
+                seller: currentUser.handle,
+                sellerAvatar: currentUser.avatar,
+                sellerBio: currentUser.bio,
+                likes: 0,
+                comments: 0
+            };
+
+            products.push(newProduct);
+
+            const autoShare = document.getElementById('sell-auto-share').checked;
+            if (autoShare) {
+                const socialPost = {
+                    id: socialPosts.length + 1,
+                    author: currentUser.handle,
+                    displayName: currentUser.displayName,
+                    avatar: currentUser.avatar,
+                    bio: currentUser.bio,
+                    content: `🎉 ¡Acabo de subir un nuevo producto en mi catálogo! "${title}". Disponible ahora por tan solo $${price.toFixed(2)}. ¡Échale un vistazo! 👇`,
+                    time: "Ahora mismo",
+                    likes: 0,
+                    liked: false,
+                    linkedProduct: newProduct.id
+                };
+                socialPosts.unshift(socialPost);
+            }
+
+            document.getElementById('sell-form').reset();
+
+            // Sonido de Duolingo automático al publicar correctamente
+            playDuolingoDing();
+            
+            showSimpleToast(`¡Anuncio "${title}" creado exitosamente!`);
+            switchTab('profile');
+        }
+
+        function deleteProduct(id) {
+            products = products.filter(p => p.id !== id);
+            showSimpleToast("Anuncio eliminado correctamente.");
+            renderUserProfileData();
+            renderHomeRows();
+        }
+
+        // Renderizado del muro de la Comunidad (Social)
+        function renderSocialStream() {
+            const stream = document.getElementById('social-stream');
+            stream.innerHTML = '';
+
+            socialPosts.forEach(post => {
+                let linkedProductHTML = '';
+                if (post.linkedProduct) {
+                    const prod = products.find(p => p.id === post.linkedProduct);
+                    if (prod) {
+                        linkedProductHTML = `
+                            <div onclick="showQuickView(${prod.id})" class="mt-3 flex items-center space-x-3 bg-brand-bg hover:bg-brand-light/60 p-3 rounded-xl border border-brand-light/70 cursor-pointer transition-all">
+                                <img src="${prod.image}" alt="" class="w-16 h-16 object-cover rounded-lg">
+                                <div class="flex-1">
+                                    <h5 class="text-xs font-bold text-brand-tertiary line-clamp-1">${prod.title}</h5>
+                                    <p class="text-[11px] text-brand-muted line-clamp-1">${prod.description}</p>
+                                    <p class="text-xs font-black text-brand-primary mt-1">$${prod.price.toFixed(2)} <span class="text-[9px] uppercase tracking-wider text-brand-muted font-normal"> - Click para comprar</span></p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                stream.innerHTML += `
+                    <div class="bg-brand-card rounded-2xl p-4 sm:p-5 border border-brand-light/60 shadow-sm transition-all hover:shadow-md">
+                        <div class="flex items-start space-x-3">
+                            <img src="${post.avatar}" alt="" class="w-10 h-10 rounded-full object-cover border border-brand-primary/40 cursor-pointer" onclick="viewUserProfile('${post.author}', '${post.displayName}', '${post.bio}', '${post.avatar}')">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="text-xs sm:text-sm font-bold text-brand-tertiary hover:underline cursor-pointer inline" onclick="viewUserProfile('${post.author}', '${post.displayName}', '${post.bio}', '${post.avatar}')">${post.displayName}</h4>
+                                        <span class="text-xs text-brand-muted ml-1">@${post.author}</span>
+                                    </div>
+                                    <span class="text-[11px] text-brand-muted font-medium">${post.time}</span>
+                                </div>
+                                <p class="text-xs sm:text-sm text-brand-tertiary mt-2 leading-relaxed">${post.content}</p>
+                                
+                                ${linkedProductHTML}
+
+                                <div class="flex items-center space-x-6 mt-4 text-brand-muted text-xs border-t border-brand-light/40 pt-3">
+                                    <button onclick="togglePostLike(${post.id})" class="flex items-center space-x-1 hover:text-red-500 transition-colors ${post.liked ? 'text-red-500 font-bold' : ''}">
+                                        <i class="${post.liked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                                        <span>${post.likes}</span>
+                                    </button>
+                                    <button onclick="showSimpleCommentBox(${post.id})" class="flex items-center space-x-1 hover:text-brand-primary transition-colors">
+                                        <i class="fa-regular fa-comment"></i>
+                                        <span>Comentar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Vincular producto en publicación
+        function triggerProductLink() {
+            const modal = document.getElementById('linkproduct-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const list = document.getElementById('linkable-products-list');
+            list.innerHTML = '';
+
+            const myProducts = products.filter(p => p.seller === currentUser.handle);
+            if (myProducts.length === 0) {
+                list.innerHTML = `<p class="text-xs text-brand-muted py-4 text-center">Aún no tienes productos publicados para vincular.</p>`;
+                return;
+            }
+
+            myProducts.forEach(p => {
+                list.innerHTML += `
+                    <div onclick="selectProductToLink(${p.id})" class="flex items-center justify-between p-2.5 rounded-xl border border-brand-light hover:border-brand-primary hover:bg-brand-bg cursor-pointer transition-all">
+                        <div class="flex items-center space-x-3">
+                            <img src="${p.image}" alt="" class="w-10 h-10 object-cover rounded-lg">
+                            <div>
+                                <h4 class="text-xs font-bold text-brand-tertiary line-clamp-1">${p.title}</h4>
+                                <p class="text-xs text-brand-primary font-black">$${p.price.toFixed(2)}</p>
+                            </div>
+                        </div>
+                        <i class="fa-regular fa-circle-check text-brand-muted hover:text-brand-primary"></i>
+                    </div>
+                `;
+            });
+        }
+
+        function closeProductLinkModal() {
+            document.getElementById('linkproduct-modal').classList.add('hidden');
+        }
+
+        function selectProductToLink(id) {
+            const p = products.find(item => item.id === id);
+            if (!p) return;
+            selectedProductForPost = p;
+            
+            const preview = document.getElementById('linked-product-preview');
+            preview.innerHTML = `
+                <div class="mt-2 flex items-center justify-between bg-brand-primary/10 border border-brand-primary/30 p-2.5 rounded-xl">
+                    <div class="flex items-center space-x-2">
+                        <img src="${p.image}" class="w-8 h-8 rounded object-cover">
+                        <span class="text-xs font-bold text-brand-primary line-clamp-1">Vinculado: ${p.title}</span>
+                    </div>
+                    <button onclick="removeLinkedProduct()" class="text-brand-muted hover:text-red-500"><i class="fa-solid fa-xmark text-xs"></i></button>
+                </div>
+            `;
+            preview.classList.remove('hidden');
+            closeProductLinkModal();
+        }
+
+        function removeLinkedProduct() {
+            selectedProductForPost = null;
+            document.getElementById('linked-product-preview').classList.add('hidden');
+        }
+
+        function createSocialPost() {
+            const text = document.getElementById('post-textarea').value.trim();
+            if (text === '') {
+                showSimpleToast("Por favor ingresa un mensaje.");
+                return;
+            }
+
+            const newPost = {
+                id: socialPosts.length + 1,
+                author: currentUser.handle,
+                displayName: currentUser.displayName,
+                avatar: currentUser.avatar,
+                bio: currentUser.bio,
+                content: text,
+                time: "Ahora mismo",
+                likes: 0,
+                liked: false,
+                linkedProduct: selectedProductForPost ? selectedProductForPost.id : null
+            };
+
+            socialPosts.unshift(newPost);
+            
+            document.getElementById('post-textarea').value = '';
+            removeLinkedProduct();
+            renderSocialStream();
+            showSimpleToast("¡Publicación compartida en tu feed social!");
+        }
+
+        function togglePostLike(id) {
+            const post = socialPosts.find(p => p.id === id);
+            if (!post) return;
+            if (post.liked) {
+                post.likes -= 1;
+                post.liked = false;
+            } else {
+                post.likes += 1;
+                post.liked = true;
+            }
+            renderSocialStream();
+        }
+
+        function showSimpleCommentBox() {
+            showSimpleToast("Módulo de comentarios interactivo simulado.");
+        }
+
+        // Vendedores recomendados
+        const mockSellers = [
+            { username: 'retro_collector', name: 'Collector Retro', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80', bio: 'Hardware clásico y reliquias de colección.' },
+            { username: 'sound_wizard', name: 'Sound Wizard', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80', bio: 'Ingeniería de sonido y osciladores.' },
+            { username: 'keeb_maker', name: 'Keyboard Artisans', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80', bio: 'Teclados mecánicos de alta calidad.' }
+        ];
+
+        function renderRecommendedSellers() {
+            const container = document.getElementById('recommended-sellers');
+            container.innerHTML = '';
+            mockSellers.forEach(s => {
+                container.innerHTML += `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2.5">
+                            <img src="${s.avatar}" alt="" class="w-9 h-9 rounded-full object-cover">
+                            <div>
+                                <h4 class="text-xs font-bold text-brand-tertiary hover:underline cursor-pointer" onclick="viewUserProfile('${s.username}', '${s.name}', '${s.bio}', '${s.avatar}')">${s.name}</h4>
+                                <p class="text-[10px] text-brand-muted">@${s.username}</p>
+                            </div>
+                        </div>
+                        <button onclick="showSimpleToast('Siguiendo a @${s.username}')" class="text-brand-primary hover:text-brand-secondary font-extrabold text-[11px] bg-brand-primary/10 hover:bg-brand-primary/20 px-3 py-1 rounded-full transition-all">Seguir</button>
+                    </div>
+                `;
+            });
+        }
+
+        // Renderizar datos del perfil de usuario
+        function renderUserProfileData() {
+            document.getElementById('profile-display-name').innerText = currentUser.displayName;
+            document.getElementById('profile-handle').innerText = `@${currentUser.handle}`;
+            document.getElementById('profile-bio').innerText = currentUser.bio;
+            document.getElementById('profile-location').innerText = currentUser.location;
+            document.getElementById('profile-website').innerText = currentUser.website;
+            document.getElementById('profile-avatar').src = currentUser.avatar;
+            document.getElementById('profile-cover').src = currentUser.cover;
+            
+            document.getElementById('profile-followers-count').innerText = formatStat(currentUser.followers);
+            document.getElementById('profile-sales-count').innerText = currentUser.sales;
+
+            renderProfileListings();
+            renderProfileActivity();
+            renderProfilePurchased();
+        }
+
+        function formatStat(num) {
+            return num >= 1000 ? (num/1000).toFixed(1) + 'K' : num;
+        }
+
+        function toggleProfileView(view) {
+            activeProfileTab = view;
+            
+            const listTab = document.getElementById('profile-tab-listings');
+            const actTab = document.getElementById('profile-tab-activity');
+            const purTab = document.getElementById('profile-tab-purchased');
+
+            const listSec = document.getElementById('profile-listings-section');
+            const actSec = document.getElementById('profile-activity-section');
+            const purSec = document.getElementById('profile-purchased-section');
+
+            [listTab, actTab, purTab].forEach(t => t.className = "pb-3 text-sm font-bold border-b-2 border-transparent text-brand-muted hover:text-brand-tertiary");
+            [listSec, actSec, purSec].forEach(s => s.classList.add('hidden'));
+
+            if (view === 'listings') {
+                listTab.className = "pb-3 text-sm font-bold border-b-2 border-brand-primary text-brand-primary";
+                listSec.classList.remove('hidden');
+            } else if (view === 'activity') {
+                actTab.className = "pb-3 text-sm font-bold border-b-2 border-brand-primary text-brand-primary";
+                actSec.classList.remove('hidden');
+            } else if (view === 'purchased') {
+                purTab.className = "pb-3 text-sm font-bold border-b-2 border-brand-primary text-brand-primary";
+                purSec.classList.remove('hidden');
+            }
+        }
+
+        function renderProfileListings() {
+            const container = document.getElementById('profile-listings-section');
+            container.innerHTML = '';
+            const myItems = products.filter(p => p.seller === currentUser.handle);
+
+            if (myItems.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-brand-card rounded-2xl border border-dashed border-brand-light">
+                        <i class="fa-solid fa-tags text-brand-muted/40 text-3xl mb-2"></i>
+                        <p class="text-xs text-brand-muted">Aún no estás vendiendo nada.</p>
+                        <button onclick="switchTab('sell')" class="mt-3 text-xs bg-brand-primary text-white font-bold px-4 py-1.5 rounded-full">Publicar mi primer producto</button>
+                    </div>
+                `;
+                return;
+            }
+
+            myItems.forEach(p => {
+                container.insertAdjacentHTML('beforeend', createProductCardHTML(p));
+            });
+        }
+
+        function renderProfileActivity() {
+            const container = document.getElementById('profile-activity-section');
+            container.innerHTML = '';
+            const myPosts = socialPosts.filter(p => p.author === currentUser.handle);
+
+            if (myPosts.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 bg-brand-card rounded-2xl border border-dashed border-brand-light">
+                        <p class="text-xs text-brand-muted">No tienes publicaciones en tu red social.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            myPosts.forEach(post => {
+                let linkedProductHTML = '';
+                if (post.linkedProduct) {
+                    const prod = products.find(p => p.id === post.linkedProduct);
+                    if (prod) {
+                        linkedProductHTML = `
+                            <div class="mt-3 flex items-center space-x-3 bg-brand-bg p-3 rounded-xl border border-brand-light/70">
+                                <img src="${prod.image}" alt="" class="w-16 h-16 object-cover rounded-lg">
+                                <div class="flex-1">
+                                    <h5 class="text-xs font-bold text-brand-tertiary line-clamp-1">${prod.title}</h5>
+                                    <p class="text-[11px] text-brand-muted line-clamp-1">${prod.description}</p>
+                                    <p class="text-xs font-black text-brand-primary mt-1">$${prod.price.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                container.innerHTML += `
+                    <div class="bg-brand-card rounded-2xl p-4 border border-brand-light/60">
+                        <div class="flex items-start space-x-3">
+                            <img src="${post.avatar}" alt="" class="w-9 h-9 rounded-full object-cover">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-brand-tertiary">${post.displayName}</span>
+                                    <span class="text-[11px] text-brand-muted">${post.time}</span>
+                                </div>
+                                <p class="text-xs text-brand-tertiary mt-1">${post.content}</p>
+                                ${linkedProductHTML}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderProfilePurchased() {
+            const container = document.getElementById('profile-purchased-section');
+            container.innerHTML = '';
+
+            if (purchasedItems.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-brand-card rounded-2xl border border-dashed border-brand-light">
+                        <i class="fa-solid fa-basket-shopping text-brand-muted/40 text-3xl mb-2"></i>
+                        <p class="text-xs text-brand-muted">No has realizado ninguna compra todavía.</p>
+                        <button onclick="switchTab('home')" class="mt-3 text-xs bg-brand-primary text-white font-bold px-4 py-1.5 rounded-full">Explorar Recomendados</button>
+                    </div>
+                `;
+                return;
+            }
+
+            purchasedItems.forEach(p => {
+                container.innerHTML += `
+                    <div class="bg-brand-card rounded-2xl border border-brand-light/60 overflow-hidden flex flex-col justify-between h-[280px]">
+                        <div class="h-32 bg-brand-bg relative">
+                            <img src="${p.image}" alt="" class="w-full h-full object-cover">
+                            <span class="absolute top-2 left-2 bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">ADQUIRIDO ✅</span>
+                        </div>
+                        <div class="p-3 flex-1 flex flex-col justify-between">
+                            <div>
+                                <h4 class="text-xs font-bold text-brand-tertiary line-clamp-1">${p.title}</h4>
+                                <p class="text-[10px] text-brand-muted mt-1">Vendedor original: @${p.seller}</p>
+                            </div>
+                            <div class="pt-2 border-t border-brand-light/40 flex items-center justify-between">
+                                <span class="text-xs font-extrabold text-brand-primary">$${p.price.toFixed(2)}</span>
+                                ${p.type === 'virtual' ? `
+                                    <button onclick="simulateDownload('${p.title}')" class="bg-brand-primary hover:bg-brand-secondary text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full transition-all flex items-center space-x-1">
+                                        <i class="fa-solid fa-circle-down"></i>
+                                        <span>Descargar</span>
+                                    </button>
+                                ` : `
+                                    <button onclick="simulateTracking()" class="bg-brand-bg hover:bg-brand-light text-brand-tertiary text-[10px] font-bold px-3 py-1.5 rounded-full transition-all flex items-center space-x-1">
+                                        <i class="fa-solid fa-truck"></i>
+                                        <span>Rastrear Envío</span>
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function simulateDownload(title) {
+            showSimpleToast(`Descargando archivo digital: ${title}... ¡Listo!`);
+        }
+
+        function simulateTracking() {
+            showSimpleToast("Código de seguimiento: #NM-98231. El paquete se encuentra en ruta.");
+        }
+
+        // Editar perfil social
+        function openEditProfileModal() {
+            document.getElementById('edit-display-name').value = currentUser.displayName;
+            document.getElementById('edit-handle').value = currentUser.handle;
+            document.getElementById('edit-bio').value = currentUser.bio;
+            document.getElementById('edit-location').value = currentUser.location;
+            document.getElementById('edit-website').value = currentUser.website;
+
+            const modal = document.getElementById('editprofile-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('editprofile-modal').classList.add('hidden');
+        }
+
+        function handleSaveProfile(event) {
+            event.preventDefault();
+
+            currentUser.displayName = document.getElementById('edit-display-name').value;
+            currentUser.handle = document.getElementById('edit-handle').value;
+            currentUser.bio = document.getElementById('edit-bio').value;
+            currentUser.location = document.getElementById('edit-location').value;
+            currentUser.website = document.getElementById('edit-website').value;
+
+            currentUser.avatar = document.getElementById('edit-avatar-select').value;
+            currentUser.cover = document.getElementById('edit-cover-select').value;
+
+            document.getElementById('header-avatar').src = currentUser.avatar;
+            document.getElementById('header-username').innerText = `@${currentUser.handle}`;
+            document.getElementById('social-post-avatar').src = currentUser.avatar;
+
+            closeEditProfileModal();
+            renderUserProfileData();
+            showSimpleToast("¡Perfil guardado con éxito!");
+        }
+
+        // Ver perfiles de otros vendedores en la comunidad
+        function viewUserProfile(username, displayName, bio, avatar) {
+            if (username === currentUser.handle) {
+                switchTab('profile');
+                return;
+            }
+
+            document.getElementById('upm-display-name').innerText = displayName;
+            document.getElementById('upm-handle').innerText = `@${username}`;
+            document.getElementById('upm-bio').innerText = bio || "Este creador no ha configurado una biografía todavía.";
+            document.getElementById('upm-avatar').src = avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80";
+
+            const grid = document.getElementById('upm-products-grid');
+            grid.innerHTML = '';
+            
+            const filtered = products.filter(p => p.seller === username);
+            if (filtered.length === 0) {
+                grid.innerHTML = `<p class="text-xs text-brand-muted col-span-2 text-center py-4">Este usuario no tiene productos listados.</p>`;
+            } else {
+                filtered.forEach(p => {
+                    grid.innerHTML += `
+                        <div onclick="closeUserProfileModal(); showQuickView(${p.id});" class="flex items-center space-x-2 bg-brand-bg p-2 rounded-xl cursor-pointer hover:bg-brand-light transition-all border border-brand-light/60">
+                            <img src="${p.image}" alt="" class="w-10 h-10 object-cover rounded-lg">
+                            <div class="flex-1">
+                                <h5 class="text-[11px] font-bold text-brand-tertiary truncate">${p.title}</h5>
+                                <span class="text-xs font-extrabold text-brand-primary">$${p.price.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            const followBtn = document.getElementById('upm-follow-btn');
+            followBtn.innerText = "Seguir";
+            followBtn.onclick = () => {
+                playDuolingoDing(); // Sonido interactivo al seguir
+                followBtn.innerText = "Siguiendo ✔";
+                showSimpleToast(`Ahora sigues a @${username}`);
+            };
+
+            const modal = document.getElementById('user-profile-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeUserProfileModal() {
+            document.getElementById('user-profile-modal').classList.add('hidden');
+        }
+
+        // Toasts Rápidos de Información
+        function showSimpleToast(message) {
+            const prev = document.getElementById('simple-toast');
+            if (prev) prev.remove();
+
+            const toast = document.createElement('div');
+            toast.id = 'simple-toast';
+            toast.className = 'fixed bottom-6 left-6 z-50 bg-brand-tertiary text-white text-xs font-bold px-5 py-3.5 rounded-2xl shadow-xl flex items-center space-x-2 border border-brand-primary/20 animate-slideUp';
+            toast.innerHTML = `
+                <div class="w-2 h-2 rounded-full bg-brand-secondary"></div>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast) toast.remove();
+            }, 3500);
+        }
+
+        // Inicialización tras cargar el DOM
+        window.onload = function() {
+            // Cargar pestaña por defecto de forma estática antes del slider
+            switchTab('home');
+
+            // Efecto Header en Scroll
+            window.addEventListener('scroll', () => {
+                const header = document.querySelector('header');
+                if (window.scrollY > 20) {
+                    header.classList.add('shadow-md');
+                } else {
+                    header.classList.remove('shadow-md');
+                }
+            });
+
+            // Desbloquear audio automáticamente al primer clic para evitar políticas del navegador
+            window.addEventListener('click', () => {
+                initAudio();
+            }, { once: true });
+            
+            window.addEventListener('touchstart', () => {
+                initAudio();
+            }, { once: true });
+        }
+    </script>
+</body>
+</html>
